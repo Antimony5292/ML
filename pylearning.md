@@ -112,11 +112,85 @@
 	>f=lambda arg1,...,argn:expression(arg1,...,argn)   
 
 - **类型**<br>
-	python中类型和C中大不相同：变量是没有类型的，只是充当一个“指针”的作用，而对象才有类型。<br>
+	python中类型和C中大不相同：**变量是没有类型的，只是充当一个“指针”的作用，而对象才有类型。**<br>
 	strings, tuples, 和 numbers 是不可更改的对象，而 list,dict 等则是可以修改的对象。<br>
 	对于不可变类型，作为参数传入函数中对其本身并没有任何影响;比如在 fun(a)内部修改 a 的值，只是修改另一个复制的对象，不会影响 a 本身。<br>
 	而可变类型传入函数中则类似C中的引用，是将对象真正的传入函数中，修改后函数外部的对象也会相应改变。<br>
 - **切片**<br>
 	对L[a:b],取出从L[a]到L[b-1]的所有元素；若a为0，a还可以省略；若省略b即b=len(L)+1.<br>
 	若要等间隔s取点，则可以写L[a : b : s];若要完全复制L还可以写L[:].<br>
-
+# 2018-10-21
+- **迭代**<br>
+	python中迭代的语法很像for循环；或者不如说，循环就是一种特殊的迭代。python可迭代的对象非常广泛，因此很有必要掌握。<br>
+	比如，字典类型就可以迭代，有三种方式：
+	```python
+	for k in dict #迭代键
+	for v in dict.values() #迭代值
+	for k, v in d.items() #同时迭代键和值
+	```
+- **列表生成式**<br>
+	所谓列表生成式，顾名思义，即生成list的式子。利用这种方法可以很方便的生成有规律的list。格式如下：
+	>*expression(x1,x2,...)* for x1... for x2... ......<br>
+	例如要生成全组合，可以这样写：
+	```
+	>>> [m + n for m in 'ABC' for n in 'XYZ']
+	['AX', 'AY', 'AZ', 'BX', 'BY', 'BZ', 'CX', 'CY', 'CZ']
+	```
+- **生成器generator**<br>
+	上面的列表生成式固然很简单，但是受内存所限，不可能保存一个很大的列表。此时就需要用生成器来生成有规律的数字了。<br>
+	要创建一个generator，有很多种方法。第一种方法很简单，只要把一个列表生成式的[]改成()，就创建了一个generator：<br>
+	generator显然是一个可迭代对象，只要使用迭代就可以生成值了。
+	```python
+	>>> g = (x * x for x in range(10))
+	>>> for n in g:
+	...     print(n)
+	... 
+	0
+	1
+	4
+	9
+	16
+	25
+	```
+	如果推算的算法比较复杂，用类似列表生成式的for循环无法实现的时候，还可以用函数来实现。例如著名的Fibonacci数列，如果普通的定义一个函数，如下：
+	```python
+	def fib(max):
+    n, a, b = 0, 0, 1
+    while n < max:
+        print(b)
+        a, b = b, a + b
+        n = n + 1
+    return 'done'
+	```
+	要把fib函数变成generator，只需要把*print(b)*改为*yield b*就可以了，这就是定义generator的第二种方法。<br>
+	```python
+	def fib(max):
+    n, a, b = 0, 0, 1
+    while n < max:
+        yield b
+        a, b = b, a + b
+        n = n + 1
+    return 'done'
+    ```
+    generator和函数的执行流程不一样。函数是顺序执行，遇到*return*语句或者最后一行函数语句就返回。<br>
+    而变成*generator*的函数，在每次调用*next()*的时候执行，遇到*yield*语句返回，再次执行时从上次返回的*yield*语句处继续执行。<br>
+    但是用*for*循环调用*generator*时，发现拿不到*generator*的*return*语句的返回值。<br>
+    如果想要拿到返回值，必须捕获*StopIteration*错误，返回值包含在*StopIteration*的*value*中：
+    ```python
+>>> g = fib(6)
+>>> while True:
+...     try:
+...         x = next(g)
+...         print('g:', x)
+...     except StopIteration as e:
+...         print('Generator return value:', e.value)
+...         break
+...
+g: 1
+g: 1
+g: 2
+g: 3
+g: 5
+g: 8
+Generator return value: done
+```
